@@ -8,9 +8,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.app.DatePickerDialog
 import android.text.format.DateFormat
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Toast
+import android.view.View
+import android.widget.*
 import java.util.*
 
 
@@ -67,8 +66,28 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "No items do delete", Toast.LENGTH_LONG)
 
             toast.show()
-
         }
+
+        val spnItemType = findViewById<Spinner>(R.id.delete_item_type_selector);
+
+        spnItemType.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onNothingSelected(p0: AdapterView<*>?) {
+
+                }
+
+                override fun onItemSelected(_ad: AdapterView<*>?, _view: View?, pos: Int, id: Long) {
+                    this@MainActivity.deletionCriteria.itemTypes = when {
+                        spnItemType.selectedItemPosition == 1 -> DeletionItems.IMAGE_ONLY
+                        spnItemType.selectedItemPosition == 2 -> DeletionItems.VIDEO_ONLY
+                        else -> DeletionItems.IMAGE_AND_VIDEO
+                    }
+
+                    this@MainActivity.imagesAdapter.refreshCameraImages(this@MainActivity.deletionCriteria)
+                }
+
+            }
+
 
         editTextImagesSince = findViewById<EditText>(R.id.edit_text_date)
 

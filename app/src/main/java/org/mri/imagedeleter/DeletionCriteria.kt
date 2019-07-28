@@ -9,9 +9,13 @@ enum class DeletionItems {
 }
 
 data class DeletionCriteria(
-    var deleteBefore: Date
+    var deleteBefore: Date,
+    var itemTypes: DeletionItems
 ) {
     companion object {
-        fun default() = DeletionCriteria(Date(Calendar.getInstance().timeInMillis))
+        fun default() = DeletionCriteria(
+            Date(Calendar.getInstance().timeInMillis),
+            DeletionItems.IMAGE_AND_VIDEO
+        )
     }
 }

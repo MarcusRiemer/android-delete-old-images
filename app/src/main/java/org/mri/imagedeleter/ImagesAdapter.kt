@@ -5,12 +5,14 @@ import android.database.Cursor
 import android.graphics.BitmapFactory
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import java.lang.RuntimeException
 import kotlin.collections.ArrayList
 
 class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesAdapter.ViewHolder>() {
@@ -19,6 +21,9 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
 
     fun refreshCameraImages(criteria: DeletionCriteria) {
         this.items = getCameraImages(context, criteria)
+        notifyDataSetChanged()
+
+        Log.i(ImagesAdapter::class.java.name,"Refreshed camera images, now showing ${items.size} items")
     }
 
     /**
@@ -27,6 +32,18 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
      */
     fun getBucketId(path: String): String {
         return path.toLowerCase().hashCode().toString()
+    }
+
+    private fun selectionTypes(criteria: DeletionCriteria):String {
+        val img = MediaStore.Files.FileColumns.MEDIA_TYPE + "=" + MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
+        val vid = MediaStore.Files.FileColumns.MEDIA_TYPE + "=" + MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
+
+        return when {
+            criteria.itemTypes == DeletionItems.IMAGE_AND_VIDEO -> "($img OR $vid)"
+            criteria.itemTypes == DeletionItems.IMAGE_ONLY -> img
+            criteria.itemTypes == DeletionItems.VIDEO_ONLY -> vid
+            else -> throw RuntimeException("Unknown deletion item type: ${criteria.itemTypes}")
+        }
     }
 
     fun getCameraImages(context: Context, criteria: DeletionCriteria): List<DeletionItem> {
@@ -44,13 +61,8 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
         )
 
         // Return only video and image metadata.
-        val selectionTypes = (MediaStore.Files.FileColumns.MEDIA_TYPE + "="
-                + MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
-                + " OR "
-                + MediaStore.Files.FileColumns.MEDIA_TYPE + "="
-                + MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)
         val selectionBucket = MediaStore.Images.Media.BUCKET_ID + " = ?"
-        val selection = "$selectionBucket AND ($selectionTypes)"
+        val selection = "$selectionBucket AND ${selectionTypes(criteria)}"
         val selectionArgs = arrayOf(camera_image_bucket_id)
         val cursor: Cursor = context.contentResolver.query(
             MediaStore.Files.getContentUri("external"),
@@ -68,7 +80,7 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
                 val path = cursor.getString(idxFilePath)
                 val isImage = cursor.getInt(idxMediaType) == MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
                 val type = if (isImage) DeletionItem.Type.IMAGE else DeletionItem.Type.VIDEO
-                result.add(DeletionItem(path, type))
+                result.add(DeletionItem.create(path, type))
             } while (cursor.moveToNext())
         }
         cursor.close()
@@ -87,6 +99,8 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
             it.updateSelection(criteria)
         }
         notifyDataSetChanged()
+
+        Log.i(ImagesAdapter::class.java.name,"Updated selection, showing ${items.size} items")
     }
 
     fun deleteSelection(): DeletionResult {

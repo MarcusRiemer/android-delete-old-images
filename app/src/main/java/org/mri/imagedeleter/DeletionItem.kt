@@ -13,13 +13,23 @@ import java.util.*
  * A single item that may or may not be deleted later. Provides all the relevant UI and
  * computed data that is required for the actual filtering of deleted items.
  */
-data class DeletionItem(
-    val path: String,
+open class DeletionItem(
+    path: String,
     val mediaType: Type
 ) {
     enum class Type {
         IMAGE,
         VIDEO
+    }
+
+    companion object {
+        fun create(path: String, mediaType: Type): DeletionItem {
+            if (mediaType == Type.VIDEO) {
+                return DeletionItem(path, mediaType)
+            } else {
+                return DeletionItem(path, mediaType)
+            }
+        }
     }
 
     val file = File(path)
@@ -41,4 +51,14 @@ data class DeletionItem(
         selected = (creationDate().before(criteria.deleteBefore))
     }
 }
+
+class VideoDeletionItem(path: String) : DeletionItem(
+    path,
+    Type.VIDEO
+)
+
+class ImageDeletionItem(path: String) : DeletionItem(
+    path,
+    Type.VIDEO
+)
 
