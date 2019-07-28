@@ -13,9 +13,10 @@
             android:id="@+id/textInputDateLayout">
 
         <EditText
-                android:id="@+id/editTextDate"
+                android:id="@+id/edit_text_date"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:hint="@string/delete_since_hint"/>
+                android:layout_height="wrap_content" android:hint="@string/delete_since_hint"
+                android:focusable="false"/>
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -27,7 +28,18 @@
             android:layout_marginTop="8dp" app:layout_constraintTop_toBottomOf="@+id/textInputDateLayout"
             android:spinnerMode="dialog"/>
     <androidx.recyclerview.widget.RecyclerView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:id="@+id/images_recycler_view"
-            android:layout_marginTop="8dp" app:layout_constraintTop_toBottomOf="@+id/spinner"/>
+            android:layout_width="0dp"
+            android:layout_height="0dp" android:id="@+id/images_recycler_view"
+            android:layout_marginTop="8dp" app:layout_constraintTop_toBottomOf="@+id/spinner"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/button" android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"/>
+    <Button
+            android:text="@string/btn_delete"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/button"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
