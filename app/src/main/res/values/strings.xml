@@ -5,6 +5,9 @@
     <string name="explain_permissions">In order to work, this application requires permission to read and write your
         data.
     </string>
+    <string name="dlg_really_delete_title">Really delete %1$d images (%2$s)?</string>
+    <string name="dlg_really_delete_positive">Delete!</string>
+    <string name="dlg_really_delete_negative">Oops, No!</string>
     <string name="btn_grant_permission">Okay, I will grant permission</string>
     <string-array name="delete_options">
         <item>Images &amp; Videos</item>

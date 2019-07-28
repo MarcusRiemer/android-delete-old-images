@@ -1,6 +1,8 @@
 package org.mri.imagedeleter
 
+import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.text.format.DateFormat
@@ -17,10 +19,15 @@ import java.util.*
 class MainActivity : AppCompatActivity() {
     private var editTextImagesSince: EditText? = null
 
-    private val imagesAdapter = ImagesAdapter(this)
+    // The images that are about to be deleted
+    private val deletionItemsAdapter = DeletionItemsAdapter(this)
 
+    // The criteria to apply when deleting
     private val deletionCriteria = DeletionCriteria.default()
 
+    /**
+     * Checking permissions and wiring up events.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -34,25 +41,21 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-        imagesAdapter.refreshCameraImages(deletionCriteria)
-
+        // React to deleting
         val btnDelete = findViewById<Button>(R.id.btn_delete)
         btnDelete.setOnClickListener {
-            val res = this@MainActivity.imagesAdapter.deleteSelection()
-            val toast = if (res.numDeleted() > 0)
-                Toast.makeText(
-                    this,
-                    String.format("Deleted %d items, freed %s", res.numDeleted(), res.sizeDeleted()),
-                    Toast.LENGTH_LONG
-                )
-            else
-                Toast.makeText(this, "No items do delete", Toast.LENGTH_LONG)
-
-            toast.show()
+            val res = this@MainActivity.deletionItemsAdapter.deleteSelection()
+            if (res.numDeleted() > 0) {
+                val d = deleteConfirmationDialog(res)
+                d.show()
+            } else {
+                val t = Toast.makeText(this, "No items do delete", Toast.LENGTH_LONG)
+                t.show()
+            }
         }
 
+        // React to changes in the types of item to select
         val spnItemType = findViewById<Spinner>(R.id.delete_item_type_selector);
-
         spnItemType.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
                 override fun onNothingSelected(p0: AdapterView<*>?) {
@@ -66,12 +69,13 @@ class MainActivity : AppCompatActivity() {
                         else -> DeletionItemTypes.IMAGE_AND_VIDEO
                     }
 
-                    this@MainActivity.imagesAdapter.refreshCameraImages(this@MainActivity.deletionCriteria)
+                    this@MainActivity.deletionItemsAdapter.refreshCameraImages(this@MainActivity.deletionCriteria)
                 }
 
             }
 
 
+        // Update deletion date
         editTextImagesSince = findViewById<EditText>(R.id.edit_text_date)
 
         updateBeforeDate()
@@ -96,21 +100,38 @@ class MainActivity : AppCompatActivity() {
             ).show()
         }
 
+        // Populate the shown images
         val recyclerView = findViewById<RecyclerView>(R.id.images_recycler_view)
         recyclerView.layoutManager = GridLayoutManager(this, 2)
-        recyclerView.adapter = imagesAdapter
+        recyclerView.adapter = deletionItemsAdapter
     }
 
     override fun onResume() {
         super.onResume()
 
-        imagesAdapter.refreshCameraImages(deletionCriteria)
+        deletionItemsAdapter.refreshCameraImages(deletionCriteria)
     }
 
     private fun updateBeforeDate() {
         val format = DateFormat.getDateFormat(this)
         editTextImagesSince!!.setText(format.format(deletionCriteria.deleteBefore.time))
 
-        imagesAdapter.updateSelection(deletionCriteria)
+        deletionItemsAdapter.updateSelection(deletionCriteria)
     }
+
+    private fun deleteConfirmationDialog(res: DeletionResult) = AlertDialog.Builder(this)
+        .setTitle(getString(R.string.dlg_really_delete_title, res.numDeleted(), res.sizeDeleted()))
+        .setPositiveButton(
+            R.string.dlg_really_delete_positive,
+            { dlg: DialogInterface, _: Int ->
+                res.actuallyDelete()
+                dlg.dismiss()
+            })
+        .setNegativeButton(
+            R.string.dlg_really_delete_negative,
+            { dlg: DialogInterface, _: Int ->
+                dlg.cancel()
+            })
+        .create()
+
 }

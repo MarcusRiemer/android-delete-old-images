@@ -12,7 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesAdapter.ViewHolder>() {
+class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<DeletionItemsAdapter.ViewHolder>() {
 
     private var items: List<DeletionItem> = ArrayList<DeletionItem>()
 
@@ -20,7 +20,7 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
         this.items = getCameraImages(context, criteria)
         notifyDataSetChanged()
 
-        Log.i(ImagesAdapter::class.java.name, "Refreshed camera images, now showing ${items.size} items")
+        Log.i(DeletionItemsAdapter::class.java.name, "Refreshed camera images, now showing ${items.size} items")
     }
 
     /**
@@ -108,19 +108,17 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
         }
         notifyDataSetChanged()
 
-        Log.i(ImagesAdapter::class.java.name, "Updated selection, showing ${items.size} items")
+        Log.i(DeletionItemsAdapter::class.java.name, "Updated selection, showing ${items.size} items")
     }
 
     fun deleteSelection(): DeletionResult {
         val partitioned = items.partition { it.selected }
         val toDelete = partitioned.first
-        items = partitioned.second
-
-        // toDelete.forEach { it.file.delete() }
+        val remaining = partitioned.second
 
         notifyDataSetChanged()
 
-        return (DeletionResult(toDelete))
+        return (DeletionResult(toDelete, { this.items = remaining }))
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
