@@ -10,11 +10,12 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import java.io.File
+import java.util.*
+import kotlin.collections.ArrayList
 
 class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesAdapter.ViewHolder>() {
 
-    private var items = getCameraImages(context)
+    private var items : List<ImageItem> = ArrayList<ImageItem>()
 
     fun refreshCameraImages() {
         this.items = getCameraImages(context)
@@ -61,6 +62,13 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
 
     override fun getItemCount() = items.size
 
+    fun updateSelection(deleteBefore: Date) {
+        items.forEach {
+            it.updateSelection(deleteBefore)
+        }
+        notifyDataSetChanged()
+    }
+
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(item: ImageItem) {
             val imageView = itemView.findViewById<ImageView>(R.id.image_item_view)
@@ -72,7 +80,7 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
 
             imageViewDate.text = item.formattedDate(imageView.context)
             imageViewSize.text = item.formattedSize
-
+            itemView.setBackgroundColor(item.backgroundColor())
 
         }
     }

@@ -10,7 +10,6 @@ import android.app.DatePickerDialog
 import android.text.format.DateFormat
 import android.widget.EditText
 import java.util.*
-import java.text.SimpleDateFormat
 
 
 class MainActivity : AppCompatActivity() {
@@ -19,6 +18,8 @@ class MainActivity : AppCompatActivity() {
     private val MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 12
 
     private var editTextImagesSince: EditText? = null
+
+    private val imagesAdapter = ImagesAdapter(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,15 +45,19 @@ class MainActivity : AppCompatActivity() {
             return;
         }
 
+        imagesAdapter.refreshCameraImages()
+
+        editTextImagesSince = findViewById<EditText>(R.id.edit_text_date)
 
         val sharedBeginCalendar = Calendar.getInstance()
-        editTextImagesSince = findViewById<EditText>(R.id.edit_text_date)
+        updateBeforeDate(sharedBeginCalendar)
+
         val date = DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
 
             sharedBeginCalendar.set(Calendar.YEAR, year)
             sharedBeginCalendar.set(Calendar.MONTH, monthOfYear)
             sharedBeginCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-            updateLabel(sharedBeginCalendar)
+            updateBeforeDate(sharedBeginCalendar)
         }
 
         editTextImagesSince!!.setOnClickListener {
@@ -63,16 +68,15 @@ class MainActivity : AppCompatActivity() {
             ).show()
         }
 
-        val imagesAdapter = ImagesAdapter(this)
-
         val recyclerView = findViewById<RecyclerView>(R.id.images_recycler_view)
         recyclerView.layoutManager = GridLayoutManager(this, 2)
         recyclerView.adapter = imagesAdapter
     }
 
-    private fun updateLabel(c: Calendar) {
+    private fun updateBeforeDate(c: Calendar) {
         val format = DateFormat.getDateFormat(this)
-
         editTextImagesSince!!.setText(format.format(c.getTime()))
+
+        imagesAdapter.updateSelection(Date(c.timeInMillis))
     }
 }
