@@ -78,9 +78,9 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onItemSelected(_ad: AdapterView<*>?, _view: View?, pos: Int, id: Long) {
                     this@MainActivity.deletionCriteria.itemTypes = when {
-                        spnItemType.selectedItemPosition == 1 -> DeletionItems.IMAGE_ONLY
-                        spnItemType.selectedItemPosition == 2 -> DeletionItems.VIDEO_ONLY
-                        else -> DeletionItems.IMAGE_AND_VIDEO
+                        spnItemType.selectedItemPosition == 1 -> DeletionItemTypes.IMAGE_ONLY
+                        spnItemType.selectedItemPosition == 2 -> DeletionItemTypes.VIDEO_ONLY
+                        else -> DeletionItemTypes.IMAGE_AND_VIDEO
                     }
 
                     this@MainActivity.imagesAdapter.refreshCameraImages(this@MainActivity.deletionCriteria)

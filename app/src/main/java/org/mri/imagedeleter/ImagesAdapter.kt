@@ -23,7 +23,7 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
         this.items = getCameraImages(context, criteria)
         notifyDataSetChanged()
 
-        Log.i(ImagesAdapter::class.java.name,"Refreshed camera images, now showing ${items.size} items")
+        Log.i(ImagesAdapter::class.java.name, "Refreshed camera images, now showing ${items.size} items")
     }
 
     /**
@@ -34,14 +34,14 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
         return path.toLowerCase().hashCode().toString()
     }
 
-    private fun selectionTypes(criteria: DeletionCriteria):String {
+    private fun selectionTypes(criteria: DeletionCriteria): String {
         val img = MediaStore.Files.FileColumns.MEDIA_TYPE + "=" + MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
         val vid = MediaStore.Files.FileColumns.MEDIA_TYPE + "=" + MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
 
         return when {
-            criteria.itemTypes == DeletionItems.IMAGE_AND_VIDEO -> "($img OR $vid)"
-            criteria.itemTypes == DeletionItems.IMAGE_ONLY -> img
-            criteria.itemTypes == DeletionItems.VIDEO_ONLY -> vid
+            criteria.itemTypes == DeletionItemTypes.IMAGE_AND_VIDEO -> "($img OR $vid)"
+            criteria.itemTypes == DeletionItemTypes.IMAGE_ONLY -> img
+            criteria.itemTypes == DeletionItemTypes.VIDEO_ONLY -> vid
             else -> throw RuntimeException("Unknown deletion item type: ${criteria.itemTypes}")
         }
     }
@@ -57,7 +57,9 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
             MediaStore.Files.FileColumns.DATE_ADDED,
             MediaStore.Files.FileColumns.MEDIA_TYPE,
             MediaStore.Files.FileColumns.MIME_TYPE,
-            MediaStore.Files.FileColumns.TITLE
+            MediaStore.Files.FileColumns.TITLE,
+            MediaStore.Images.Thumbnails.DATA,
+            MediaStore.Video.Thumbnails.DATA
         )
 
         // Return only video and image metadata.
@@ -80,7 +82,16 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
                 val path = cursor.getString(idxFilePath)
                 val isImage = cursor.getInt(idxMediaType) == MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
                 val type = if (isImage) DeletionItem.Type.IMAGE else DeletionItem.Type.VIDEO
-                result.add(DeletionItem.create(path, type))
+
+                val idxThumbPath = if (isImage)
+                    cursor.getColumnIndexOrThrow(MediaStore.Images.Thumbnails.DATA)
+                else
+                    cursor.getColumnIndexOrThrow(MediaStore.Video.Thumbnails.DATA)
+                val thumbPath = cursor.getString(idxThumbPath)
+
+                val item = DeletionItem.create(path, thumbPath, type)
+                item.updateSelection(criteria)
+                result.add(item)
             } while (cursor.moveToNext())
         }
         cursor.close()
@@ -100,7 +111,7 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
         }
         notifyDataSetChanged()
 
-        Log.i(ImagesAdapter::class.java.name,"Updated selection, showing ${items.size} items")
+        Log.i(ImagesAdapter::class.java.name, "Updated selection, showing ${items.size} items")
     }
 
     fun deleteSelection(): DeletionResult {
@@ -121,8 +132,7 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
             val imageViewDate = itemView.findViewById<TextView>(R.id.image_date)
             val imageViewSize = itemView.findViewById<TextView>(R.id.image_size)
 
-            val myBitmap = BitmapFactory.decodeFile(item.file.absolutePath)
-            imageView.setImageBitmap(myBitmap)
+            imageView.setImageBitmap(item.thumbnail())
 
             imageViewDate.text = item.formattedDate(imageView.context)
             imageViewSize.text = item.formattedSize
