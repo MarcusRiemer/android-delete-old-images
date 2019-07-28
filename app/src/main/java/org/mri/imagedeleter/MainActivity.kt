@@ -8,7 +8,9 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.app.DatePickerDialog
 import android.text.format.DateFormat
+import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import java.util.*
 
 
@@ -21,16 +23,21 @@ class MainActivity : AppCompatActivity() {
 
     private val imagesAdapter = ImagesAdapter(this)
 
+    private val deletionCriteria = DeletionCriteria.default()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED) {
+            != PackageManager.PERMISSION_GRANTED
+        ) {
 
             // Should we show an explanation?
             if (shouldShowRequestPermissionRationale(
-                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+            ) {
                 // Explain to the user why we need to read the contacts
             }
 
@@ -45,24 +52,43 @@ class MainActivity : AppCompatActivity() {
             return;
         }
 
-        imagesAdapter.refreshCameraImages()
+        imagesAdapter.refreshCameraImages(deletionCriteria)
+
+        val btnDelete = findViewById<Button>(R.id.btn_delete)
+        btnDelete.setOnClickListener {
+            val res = this@MainActivity.imagesAdapter.deleteSelection()
+            val toast = if (res.numDeleted() > 0)
+                Toast.makeText(
+                    this,
+                    String.format("Deleted %d items, freed %s", res.numDeleted(), res.sizeDeleted()),
+                    Toast.LENGTH_LONG
+                )
+            else
+                Toast.makeText(this, "No items do delete", Toast.LENGTH_LONG)
+
+            toast.show()
+
+        }
 
         editTextImagesSince = findViewById<EditText>(R.id.edit_text_date)
 
-        val sharedBeginCalendar = Calendar.getInstance()
-        updateBeforeDate(sharedBeginCalendar)
+        updateBeforeDate()
 
-        val date = DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
+        val sharedBeginCalendar = Calendar.getInstance()
+        sharedBeginCalendar.timeInMillis = deletionCriteria.deleteBefore.time
+
+        val listener = DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
 
             sharedBeginCalendar.set(Calendar.YEAR, year)
             sharedBeginCalendar.set(Calendar.MONTH, monthOfYear)
             sharedBeginCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-            updateBeforeDate(sharedBeginCalendar)
+            deletionCriteria.deleteBefore = Date(sharedBeginCalendar.timeInMillis)
+            updateBeforeDate()
         }
 
         editTextImagesSince!!.setOnClickListener {
             DatePickerDialog(
-                this@MainActivity, date, sharedBeginCalendar
+                this@MainActivity, listener, sharedBeginCalendar
                     .get(Calendar.YEAR), sharedBeginCalendar.get(Calendar.MONTH),
                 sharedBeginCalendar.get(Calendar.DAY_OF_MONTH)
             ).show()
@@ -73,10 +99,16 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = imagesAdapter
     }
 
-    private fun updateBeforeDate(c: Calendar) {
-        val format = DateFormat.getDateFormat(this)
-        editTextImagesSince!!.setText(format.format(c.getTime()))
+    override fun onResume() {
+        super.onResume()
 
-        imagesAdapter.updateSelection(Date(c.timeInMillis))
+        imagesAdapter.refreshCameraImages(deletionCriteria)
+    }
+
+    private fun updateBeforeDate() {
+        val format = DateFormat.getDateFormat(this)
+        editTextImagesSince!!.setText(format.format(deletionCriteria.deleteBefore.time))
+
+        imagesAdapter.updateSelection(deletionCriteria)
     }
 }

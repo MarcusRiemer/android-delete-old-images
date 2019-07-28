@@ -1,6 +1,7 @@
 package org.mri.imagedeleter
 
 import android.content.Context
+import android.database.Cursor
 import android.graphics.BitmapFactory
 import android.os.Environment
 import android.provider.MediaStore
@@ -17,8 +18,8 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
 
     private var items : List<ImageItem> = ArrayList<ImageItem>()
 
-    fun refreshCameraImages() {
-        this.items = getCameraImages(context)
+    fun refreshCameraImages(criteria: DeletionCriteria) {
+        this.items = getCameraImages(context, criteria)
     }
 
     /**
@@ -29,21 +30,21 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
         return path.toLowerCase().hashCode().toString()
     }
 
-    fun getCameraImages(context: Context): List<ImageItem> {
+    fun getCameraImages(context: Context, criteria: DeletionCriteria): List<ImageItem> {
         val camera_image_bucket_name = Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera"
         val camera_image_bucket_id = getBucketId(camera_image_bucket_name)
 
         val projection = arrayOf(MediaStore.Images.Media.DATA)
         val selection = MediaStore.Images.Media.BUCKET_ID + " = ?"
         val selectionArgs = arrayOf(camera_image_bucket_id)
-        val cursor = context.contentResolver.query(
+        val cursor: Cursor = context.contentResolver.query(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             projection,
             selection,
             selectionArgs,
             null
         )
-        val result = ArrayList<ImageItem>(cursor.getCount())
+        val result = ArrayList<ImageItem>(cursor.count)
         if (cursor.moveToFirst()) {
             val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
             do {
@@ -62,11 +63,23 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
 
     override fun getItemCount() = items.size
 
-    fun updateSelection(deleteBefore: Date) {
+    fun updateSelection(criteria: DeletionCriteria) {
         items.forEach {
-            it.updateSelection(deleteBefore)
+            it.updateSelection(criteria)
         }
         notifyDataSetChanged()
+    }
+
+    fun deleteSelection(): DeletionResult {
+        val partitioned = items.partition { it.selected }
+        val toDelete = partitioned.first
+        items = partitioned.second
+
+        // toDelete.forEach { it.file.delete() }
+
+        notifyDataSetChanged()
+
+        return (DeletionResult(toDelete))
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

@@ -28,24 +28,14 @@ data class ImageItem(
 
     fun formattedDate(ctx: Context): String = DateFormat.getDateFormat(ctx).format(creationDate())
 
-    private fun readableFileSize(size: Long): String {
-        if (size <= 0) return "0"
-        val units = arrayOf("B", "KB", "MB", "GB", "TB")
-        val digitGroups = (Math.log10(size.toDouble()) / Math.log10(1024.0)).toInt()
-        return DecimalFormat("#,##0.#").format(
-            size / Math.pow(
-                1024.0,
-                digitGroups.toDouble()
-            )
-        ) + " " + units[digitGroups]
-    }
+    fun fileSize() = file.length()
 
-    val formattedSize = readableFileSize(file.length())
+    val formattedSize = readableFileSize(fileSize())
 
     fun backgroundColor() = if (selected) Color.RED else Color.TRANSPARENT
 
-    fun updateSelection(deleteBefore: Date) {
-        selected = (creationDate().before(deleteBefore))
+    fun updateSelection(criteria: DeletionCriteria) {
+        selected = (creationDate().before(criteria.deleteBefore))
     }
 
 }
