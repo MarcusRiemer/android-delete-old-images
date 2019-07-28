@@ -1,23 +1,20 @@
 package org.mri.imagedeleter
 
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import android.app.DatePickerDialog
+import android.content.Intent
+import android.os.Bundle
 import android.text.format.DateFormat
 import android.view.View
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import java.util.*
 
-
+/**
+ * Handles the UI for the actual deletion selection.
+ */
 class MainActivity : AppCompatActivity() {
-
-
-    private val MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 12
-
     private var editTextImagesSince: EditText? = null
 
     private val imagesAdapter = ImagesAdapter(this)
@@ -26,30 +23,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-
-            // Should we show an explanation?
-            if (shouldShowRequestPermissionRationale(
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                )
-            ) {
-                // Explain to the user why we need to read the contacts
-            }
-
-            requestPermissions(
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
-            );
-
-            // MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE is an
-            // app-defined int constant that should be quite unique
-
+        // Ensure we have enough permissions to actually delete something
+        if (!RequestPermissionsActivity.hasPermissions(this)) {
+            val intent = Intent(this, RequestPermissionsActivity::class.java)
+            startActivity(intent)
+            finish()
             return;
         }
+
+        setContentView(R.layout.activity_main)
 
         imagesAdapter.refreshCameraImages(deletionCriteria)
 
@@ -96,7 +79,7 @@ class MainActivity : AppCompatActivity() {
         val sharedBeginCalendar = Calendar.getInstance()
         sharedBeginCalendar.timeInMillis = deletionCriteria.deleteBefore.time
 
-        val listener = DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
+        val listener = DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
 
             sharedBeginCalendar.set(Calendar.YEAR, year)
             sharedBeginCalendar.set(Calendar.MONTH, monthOfYear)

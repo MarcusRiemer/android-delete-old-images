@@ -1,7 +1,11 @@
 <resources>
     <string name="app_name">Image Deleter</string>
     <string name="delete_since_hint">Delete items taken before ...</string>
-    <string name="btn_delete">Delete</string>
+    <string name="btn_delete">Delete selected items ...</string>
+    <string name="explain_permissions">In order to work, this application requires permission to read and write your
+        data.
+    </string>
+    <string name="btn_grant_permission">Okay, I will grant permission</string>
     <string-array name="delete_options">
         <item>Images &amp; Videos</item>
         <item>Images Only</item>

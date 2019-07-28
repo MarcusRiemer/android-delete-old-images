@@ -2,7 +2,6 @@ package org.mri.imagedeleter
 
 import android.content.Context
 import android.database.Cursor
-import android.graphics.BitmapFactory
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
@@ -12,8 +11,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import java.lang.RuntimeException
-import kotlin.collections.ArrayList
 
 class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesAdapter.ViewHolder>() {
 
@@ -89,7 +86,7 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
                     cursor.getColumnIndexOrThrow(MediaStore.Video.Thumbnails.DATA)
                 val thumbPath = cursor.getString(idxThumbPath)
 
-                val item = DeletionItem.create(path, thumbPath, type)
+                val item = DeletionItem(path, thumbPath, type)
                 item.updateSelection(criteria)
                 result.add(item)
             } while (cursor.moveToNext())

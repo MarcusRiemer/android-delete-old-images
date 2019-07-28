@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.media.ThumbnailUtils
+import android.provider.MediaStore
 import android.text.format.DateFormat
 import java.io.File
 import java.util.*
@@ -17,23 +19,18 @@ class DeletionItem(
     private val thumbPath: String,
     val mediaType: Type
 ) {
+    /**
+     * The type of item that would be deleted
+     */
     enum class Type {
         IMAGE,
         VIDEO
     }
 
-    companion object {
-        fun create(path: String, thumbPath: String, mediaType: Type): DeletionItem {
-            if (mediaType == Type.VIDEO) {
-                return DeletionItem(path, thumbPath, mediaType)
-            } else {
-                return DeletionItem(path, thumbPath, mediaType)
-            }
-        }
-    }
-
+    // The backing file instance
     val file = File(path)
 
+    // True, if this item is scheduled for deletion
     var selected = true
         get() = field
 
@@ -56,6 +53,9 @@ class DeletionItem(
                 || (mediaType == Type.IMAGE && request == DeletionItemTypes.IMAGE_ONLY)
                 || (mediaType == Type.VIDEO && request == DeletionItemTypes.VIDEO_ONLY)
 
-    fun thumbnail() = BitmapFactory.decodeFile(thumbPath);
+    fun thumbnail(): Bitmap = if (mediaType == Type.VIDEO)
+        ThumbnailUtils.createVideoThumbnail(file.absolutePath, MediaStore.Images.Thumbnails.MINI_KIND)
+    else
+        BitmapFactory.decodeFile(thumbPath);
 }
 
