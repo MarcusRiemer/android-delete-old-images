@@ -11,12 +11,11 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import java.util.*
 import kotlin.collections.ArrayList
 
 class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesAdapter.ViewHolder>() {
 
-    private var items : List<ImageItem> = ArrayList<ImageItem>()
+    private var items: List<DeletionItem> = ArrayList<DeletionItem>()
 
     fun refreshCameraImages(criteria: DeletionCriteria) {
         this.items = getCameraImages(context, criteria)
@@ -30,26 +29,46 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
         return path.toLowerCase().hashCode().toString()
     }
 
-    fun getCameraImages(context: Context, criteria: DeletionCriteria): List<ImageItem> {
+    fun getCameraImages(context: Context, criteria: DeletionCriteria): List<DeletionItem> {
         val camera_image_bucket_name = Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera"
         val camera_image_bucket_id = getBucketId(camera_image_bucket_name)
 
-        val projection = arrayOf(MediaStore.Images.Media.DATA)
-        val selection = MediaStore.Images.Media.BUCKET_ID + " = ?"
+        // Get relevant columns for use later.
+        val projection = arrayOf(
+            MediaStore.Files.FileColumns._ID,
+            MediaStore.Files.FileColumns.DATA,
+            MediaStore.Files.FileColumns.DATE_ADDED,
+            MediaStore.Files.FileColumns.MEDIA_TYPE,
+            MediaStore.Files.FileColumns.MIME_TYPE,
+            MediaStore.Files.FileColumns.TITLE
+        )
+
+        // Return only video and image metadata.
+        val selectionTypes = (MediaStore.Files.FileColumns.MEDIA_TYPE + "="
+                + MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
+                + " OR "
+                + MediaStore.Files.FileColumns.MEDIA_TYPE + "="
+                + MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)
+        val selectionBucket = MediaStore.Images.Media.BUCKET_ID + " = ?"
+        val selection = "$selectionBucket AND ($selectionTypes)"
         val selectionArgs = arrayOf(camera_image_bucket_id)
         val cursor: Cursor = context.contentResolver.query(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Files.getContentUri("external"),
             projection,
             selection,
             selectionArgs,
             null
         )
-        val result = ArrayList<ImageItem>(cursor.count)
+
+        val result = ArrayList<DeletionItem>(cursor.count)
         if (cursor.moveToFirst()) {
-            val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+            val idxFilePath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
+            val idxMediaType = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE)
             do {
-                val data = cursor.getString(dataColumn)
-                result.add(ImageItem(data))
+                val path = cursor.getString(idxFilePath)
+                val isImage = cursor.getInt(idxMediaType) == MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
+                val type = if (isImage) DeletionItem.Type.IMAGE else DeletionItem.Type.VIDEO
+                result.add(DeletionItem(path, type))
             } while (cursor.moveToNext())
         }
         cursor.close()
@@ -83,7 +102,7 @@ class ImagesAdapter(private val context: Context) : RecyclerView.Adapter<ImagesA
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bind(item: ImageItem) {
+        fun bind(item: DeletionItem) {
             val imageView = itemView.findViewById<ImageView>(R.id.image_item_view)
             val imageViewDate = itemView.findViewById<TextView>(R.id.image_date)
             val imageViewSize = itemView.findViewById<TextView>(R.id.image_size)

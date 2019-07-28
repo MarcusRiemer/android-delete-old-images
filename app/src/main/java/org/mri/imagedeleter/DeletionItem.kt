@@ -13,18 +13,21 @@ import java.util.*
  * A single item that may or may not be deleted later. Provides all the relevant UI and
  * computed data that is required for the actual filtering of deleted items.
  */
-data class ImageItem(
-    val path: String
+data class DeletionItem(
+    val path: String,
+    val mediaType: Type
 ) {
+    enum class Type {
+        IMAGE,
+        VIDEO
+    }
+
     val file = File(path)
 
     var selected = true
         get() = field
 
-    private val metadata = ImageMetadataReader.readMetadata(file)
-        .getFirstDirectoryOfType(ExifSubIFDDirectory::class.java)
-
-    fun creationDate() = metadata.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL)
+    fun creationDate() = Date(file.lastModified())
 
     fun formattedDate(ctx: Context): String = DateFormat.getDateFormat(ctx).format(creationDate())
 
@@ -37,5 +40,5 @@ data class ImageItem(
     fun updateSelection(criteria: DeletionCriteria) {
         selected = (creationDate().before(criteria.deleteBefore))
     }
-
 }
+
