@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="delete_since_hint">Aufnahmen vor diesem Datum löschen:</string>
+    <string name="btn_delete">Gewählte Aufnmahmen löschen ...</string>
+    <string name="explain_permissions">Damit diese Anwendung funktionieren kann, musst du Ihr die Rechte zum Lesen und
+        Schreiben deiner Mediendaten geben.
+    </string>
+    <string name="dlg_really_delete_title">%1$d Aufnahmen wirklich löschen (%2$s)?</string>
+    <string name="dlg_really_delete_positive">Löschen!</string>
+    <string name="dlg_really_delete_negative">Ups, nein!</string>
+    <string name="toast_num_deleted">%1$d Aufnamen gelöscht</string>
+    <string name="btn_grant_permission">Ja, Rechte gewähren!</string>
+    <string name="toast_empty_delete">Keine Aufnahmen zum Löschen ausgewählt</string>
+    <string-array name="delete_options">
+        <item>Bilder &amp; Videos</item>
+        <item>Nur Bilder</item>
+        <item>Nur Videos</item>
+    </string-array>
+</resources>

@@ -43,6 +43,9 @@ class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<
         }
     }
 
+
+    private val contentUri = MediaStore.Files.getContentUri("external")
+
     fun getCameraImages(context: Context, criteria: DeletionCriteria): List<DeletionItem> {
         val camera_image_bucket_name = Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera"
         val camera_image_bucket_id = getBucketId(camera_image_bucket_name)
@@ -63,19 +66,22 @@ class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<
         val selectionBucket = MediaStore.Images.Media.BUCKET_ID + " = ?"
         val selection = "$selectionBucket AND ${selectionTypes(criteria)}"
         val selectionArgs = arrayOf(camera_image_bucket_id)
+        val sortOrder = MediaStore.Files.FileColumns.DATE_ADDED
         val cursor: Cursor = context.contentResolver.query(
-            MediaStore.Files.getContentUri("external"),
+            contentUri,
             projection,
             selection,
             selectionArgs,
-            null
+            sortOrder
         )
 
         val result = ArrayList<DeletionItem>(cursor.count)
         if (cursor.moveToFirst()) {
+            val idxId = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID)
             val idxFilePath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
             val idxMediaType = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE)
             do {
+                val id = cursor.getInt(idxId)
                 val path = cursor.getString(idxFilePath)
                 val isImage = cursor.getInt(idxMediaType) == MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
                 val type = if (isImage) DeletionItem.Type.IMAGE else DeletionItem.Type.VIDEO
@@ -86,9 +92,13 @@ class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<
                     cursor.getColumnIndexOrThrow(MediaStore.Video.Thumbnails.DATA)
                 val thumbPath = cursor.getString(idxThumbPath)
 
-                val item = DeletionItem(path, thumbPath, type)
-                item.updateSelection(criteria)
-                result.add(item)
+                val item = DeletionItem(id, path, thumbPath, type)
+
+                // Dont add deletion items that exist in the database but not on disk
+                if (item.file.exists()) {
+                    item.updateSelection(criteria)
+                    result.add(item)
+                }
             } while (cursor.moveToNext())
         }
         cursor.close()
@@ -116,9 +126,10 @@ class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<
         val toDelete = partitioned.first
         val remaining = partitioned.second
 
-        notifyDataSetChanged()
-
-        return (DeletionResult(toDelete, { this.items = remaining }))
+        return (DeletionResult(contentUri, context.contentResolver, toDelete) {
+            this.items = remaining
+            notifyDataSetChanged()
+        })
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

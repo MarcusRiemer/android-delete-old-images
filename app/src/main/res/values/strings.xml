@@ -3,12 +3,14 @@
     <string name="delete_since_hint">Delete items taken before ...</string>
     <string name="btn_delete">Delete selected items ...</string>
     <string name="explain_permissions">In order to work, this application requires permission to read and write your
-        data.
+        media data.
     </string>
-    <string name="dlg_really_delete_title">Really delete %1$d images (%2$s)?</string>
+    <string name="dlg_really_delete_title">Really delete %1$d items (%2$s)?</string>
     <string name="dlg_really_delete_positive">Delete!</string>
     <string name="dlg_really_delete_negative">Oops, No!</string>
+    <string name="toast_num_deleted">Deleted %1$d items</string>
     <string name="btn_grant_permission">Okay, I will grant permission</string>
+    <string name="toast_empty_delete">No items selected to delete</string>
     <string-array name="delete_options">
         <item>Images &amp; Videos</item>
         <item>Images Only</item>

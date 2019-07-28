@@ -10,39 +10,45 @@ import androidx.appcompat.app.AppCompatActivity
 
 class RequestPermissionsActivity : AppCompatActivity() {
     companion object {
-        private const val MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 12
+        private const val PERMISSION_REQUEST_ID = 12
 
         fun hasPermissions(a: Activity) =
-            a.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+            a.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                    a.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
     }
 
 
     private fun ensurePermissions() {
-        // Should we show an explanation?
-        if (shouldShowRequestPermissionRationale(
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            )
-        ) {
-            // Explain to the user why we need to read the contacts
-        }
-
         requestPermissions(
-            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-            MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
+            arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ),
+            PERMISSION_REQUEST_ID
         );
+    }
+
+    private val btnGrantPermission: Button by lazy {
+        findViewById<Button>(R.id.btn_grant_permission)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_request_permissions)
 
-        val btnGrantPermission = findViewById<Button>(R.id.btn_grant_permission)
         btnGrantPermission.setOnClickListener {
-            this@RequestPermissionsActivity.ensurePermissions();
+            btnGrantPermission.isEnabled = false
+            ensurePermissions();
+        }
+    }
 
-            if (hasPermissions(this@RequestPermissionsActivity)) {
-                this@RequestPermissionsActivity.startActivity(Intent(this, MainActivity::class.java))
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (requestCode == PERMISSION_REQUEST_ID) {
+            if (hasPermissions(this)) {
+                this.startActivity(Intent(this, MainActivity::class.java))
                 finish()
+            } else {
+                btnGrantPermission.isEnabled = true
             }
         }
     }

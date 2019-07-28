@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
                 val d = deleteConfirmationDialog(res)
                 d.show()
             } else {
-                val t = Toast.makeText(this, "No items do delete", Toast.LENGTH_LONG)
+                val t = Toast.makeText(this, getString(R.string.toast_empty_delete), Toast.LENGTH_LONG)
                 t.show()
             }
         }
@@ -122,16 +122,19 @@ class MainActivity : AppCompatActivity() {
     private fun deleteConfirmationDialog(res: DeletionResult) = AlertDialog.Builder(this)
         .setTitle(getString(R.string.dlg_really_delete_title, res.numDeleted(), res.sizeDeleted()))
         .setPositiveButton(
-            R.string.dlg_really_delete_positive,
-            { dlg: DialogInterface, _: Int ->
-                res.actuallyDelete()
-                dlg.dismiss()
-            })
+            R.string.dlg_really_delete_positive
+        ) { dlg: DialogInterface, _: Int ->
+            val numDeleted = res.actuallyDelete()
+            dlg.dismiss()
+
+            Toast.makeText(this, getString(R.string.toast_num_deleted, numDeleted), Toast.LENGTH_LONG)
+                .show()
+        }
         .setNegativeButton(
-            R.string.dlg_really_delete_negative,
-            { dlg: DialogInterface, _: Int ->
-                dlg.cancel()
-            })
+            R.string.dlg_really_delete_negative
+        ) { dlg: DialogInterface, _: Int ->
+            dlg.cancel()
+        }
         .create()
 
 }

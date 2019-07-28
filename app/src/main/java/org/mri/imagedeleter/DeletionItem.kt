@@ -15,6 +15,7 @@ import java.util.*
  * computed data that is required for the actual filtering of deleted items.
  */
 class DeletionItem(
+    val id: Int,
     path: String,
     private val thumbPath: String,
     val mediaType: Type
