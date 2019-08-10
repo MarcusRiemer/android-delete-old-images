@@ -1,5 +1,6 @@
 package org.mri.imagedeleter
 
+import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -15,9 +16,10 @@ import java.util.*
  * computed data that is required for the actual filtering of deleted items.
  */
 class DeletionItem(
-    val id: Int,
+    val id: Long,
     path: String,
     private val thumbPath: String,
+    private val contentResolver: ContentResolver,
     val mediaType: Type
 ) {
     /**
@@ -57,6 +59,11 @@ class DeletionItem(
     fun thumbnail(): Bitmap = if (mediaType == Type.VIDEO)
         ThumbnailUtils.createVideoThumbnail(file.absolutePath, MediaStore.Images.Thumbnails.MINI_KIND)
     else
-        BitmapFactory.decodeFile(thumbPath);
+        MediaStore.Images.Thumbnails.getThumbnail(
+            contentResolver,
+            id,
+            MediaStore.Images.Thumbnails.MINI_KIND,
+            BitmapFactory.Options()
+        )
 }
 

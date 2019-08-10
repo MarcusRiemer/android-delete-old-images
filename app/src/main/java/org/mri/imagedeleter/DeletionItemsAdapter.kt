@@ -54,9 +54,7 @@ class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<
         val projection = arrayOf(
             MediaStore.Files.FileColumns._ID,
             MediaStore.Files.FileColumns.DATA,
-            MediaStore.Files.FileColumns.DATE_ADDED,
             MediaStore.Files.FileColumns.MEDIA_TYPE,
-            MediaStore.Files.FileColumns.MIME_TYPE,
             MediaStore.Files.FileColumns.TITLE,
             MediaStore.Images.Thumbnails.DATA,
             MediaStore.Video.Thumbnails.DATA
@@ -81,7 +79,7 @@ class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<
             val idxFilePath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
             val idxMediaType = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE)
             do {
-                val id = cursor.getInt(idxId)
+                val id = cursor.getLong(idxId)
                 val path = cursor.getString(idxFilePath)
                 val isImage = cursor.getInt(idxMediaType) == MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
                 val type = if (isImage) DeletionItem.Type.IMAGE else DeletionItem.Type.VIDEO
@@ -92,7 +90,7 @@ class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<
                     cursor.getColumnIndexOrThrow(MediaStore.Video.Thumbnails.DATA)
                 val thumbPath = cursor.getString(idxThumbPath)
 
-                val item = DeletionItem(id, path, thumbPath, type)
+                val item = DeletionItem(id, path, thumbPath, context.contentResolver, type)
 
                 // Dont add deletion items that exist in the database but not on disk
                 if (item.file.exists()) {
