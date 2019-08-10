@@ -54,25 +54,50 @@ class DeletionItem(
     var selected = true
         get() = field
 
+    /**
+     * The supposed creation date of this item. For some reason Android doesn't seem to expose this date in the
+     * filesystem so we just go with the next nearest guess.
+     */
     fun creationDate() = Date(file.lastModified())
 
+    /**
+     * The date to show in the UI
+     */
     fun formattedDate(ctx: Context): String = DateFormat.getDateFormat(ctx).format(creationDate())
 
+    /**
+     * The file size in bytes
+     */
     fun fileSize() = file.length()
 
+    /**
+     * The size that should be shown in the UI
+     */
     val formattedSize = readableFileSize(fileSize())
 
+    /**
+     * The colour that should be shown in the UI
+     */
     fun backgroundColor() = if (selected) Color.RED else Color.TRANSPARENT
 
+    /**
+     * Select or deselect this item based on the given criteria
+     */
     fun updateSelection(criteria: DeletionCriteria) {
         selected = isMatchingMediaType(criteria.itemTypes) && (creationDate().before(criteria.deleteBefore))
     }
 
+    /**
+     * Predicate to decide whether this item matches the given deletion type.
+     */
     fun isMatchingMediaType(request: DeletionItemTypes) =
         request == DeletionItemTypes.IMAGE_AND_VIDEO
                 || (mediaType == Type.IMAGE && request == DeletionItemTypes.IMAGE_ONLY)
                 || (mediaType == Type.VIDEO && request == DeletionItemTypes.VIDEO_ONLY)
 
+    /**
+     * A thumbnail for this deletion item.
+     */
     fun thumbnail(): Bitmap = if (mediaType == Type.VIDEO)
         ThumbnailUtils.createVideoThumbnail(file.absolutePath, MediaStore.Images.Thumbnails.MINI_KIND)
     else

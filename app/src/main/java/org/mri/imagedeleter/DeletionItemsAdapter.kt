@@ -29,26 +29,36 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
+/**
+ * A recycler view adpater that queries the Android Media Storage and marks some of the items that exist there for
+ * deletion.
+ */
 class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<DeletionItemsAdapter.ViewHolder>() {
 
+    // Backing list for the items that should be deleted.
     private var items: List<DeletionItem> = ArrayList<DeletionItem>()
 
+    /**
+     * Update the shown deletion items, possibly based on new criteria.
+     */
     fun refreshCameraImages(criteria: DeletionCriteria) {
-        this.items = getCameraImages(context, criteria)
+        this.items = queryContentResolver(criteria)
         notifyDataSetChanged()
 
         Log.i(DeletionItemsAdapter::class.java.name, "Refreshed camera images, now showing ${items.size} items")
     }
 
     /**
-     * Matches code in MediaProvider.computeBucketValues. Should be a common
-     * function.
+     * Matches code in MediaProvider.computeBucketValues.
      */
     fun getBucketId(path: String): String {
         return path.toLowerCase().hashCode().toString()
     }
 
-    private fun selectionTypes(criteria: DeletionCriteria): String {
+    /**
+     * Builds a partial SQL expression that can be used in a WHERE clause to only select rows of a certain media type.
+     */
+    private fun querySelectionTypes(criteria: DeletionCriteria): String {
         val img = MediaStore.Files.FileColumns.MEDIA_TYPE + "=" + MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
         val vid = MediaStore.Files.FileColumns.MEDIA_TYPE + "=" + MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
 
@@ -60,10 +70,15 @@ class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<
         }
     }
 
-
+    /**
+     * The place we expect the content to be
+     */
     private val contentUri = MediaStore.Files.getContentUri("external")
 
-    fun getCameraImages(context: Context, criteria: DeletionCriteria): List<DeletionItem> {
+    /**
+     * Queries the MediaStore for media items that match the given criteria.
+     */
+    fun queryContentResolver(criteria: DeletionCriteria): List<DeletionItem> {
         val camera_image_bucket_name = Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera"
         val camera_image_bucket_id = getBucketId(camera_image_bucket_name)
 
@@ -79,7 +94,7 @@ class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<
 
         // Return only video and image metadata.
         val selectionBucket = MediaStore.Images.Media.BUCKET_ID + " = ?"
-        val selection = "$selectionBucket AND ${selectionTypes(criteria)}"
+        val selection = "$selectionBucket AND ${querySelectionTypes(criteria)}"
         val selectionArgs = arrayOf(camera_image_bucket_id)
         val sortOrder = MediaStore.Files.FileColumns.DATE_ADDED
         val cursor: Cursor = context.contentResolver.query(
@@ -120,13 +135,22 @@ class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<
         return result
     }
 
+    /**
+     * Creates the widget that is used to show a deletion item.
+     */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
         ViewHolder(LayoutInflater.from(context).inflate(R.layout.image_item, null))
 
+    /**
+     * Updates the UI of a previously instanciated widget.
+     */
     override fun onBindViewHolder(holder: ViewHolder, position: Int) = holder.bind(items[position])
 
     override fun getItemCount() = items.size
 
+    /**
+     * React to changed deletion criteria, usually a changed date.
+     */
     fun updateSelection(criteria: DeletionCriteria) {
         items.forEach {
             it.updateSelection(criteria)
@@ -136,12 +160,15 @@ class DeletionItemsAdapter(private val context: Context) : RecyclerView.Adapter<
         Log.i(DeletionItemsAdapter::class.java.name, "Updated selection, showing ${items.size} items")
     }
 
-    fun deleteSelection(): DeletionResult {
+    /**
+     * Prepares deletion of the selected items. The returned instance
+     */
+    fun deleteSelection(): DeletionProcess {
         val partitioned = items.partition { it.selected }
         val toDelete = partitioned.first
         val remaining = partitioned.second
 
-        return (DeletionResult(contentUri, context.contentResolver, toDelete) {
+        return (DeletionProcess(contentUri, context.contentResolver, toDelete) {
             this.items = remaining
             notifyDataSetChanged()
         })

@@ -19,6 +19,9 @@ package org.mri.imagedeleter
 
 import java.text.DecimalFormat
 
+/**
+ * Formats a number of bytes as a more human friendly representation.
+ */
 fun readableFileSize(size: Long): String {
     if (size <= 0) return "0"
     val units = arrayOf("B", "KB", "MB", "GB", "TB")

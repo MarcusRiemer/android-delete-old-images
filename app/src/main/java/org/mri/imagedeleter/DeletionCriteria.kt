@@ -19,6 +19,9 @@ package org.mri.imagedeleter
 
 import java.util.*
 
+/**
+ * Various options on what to delete.
+ */
 enum class DeletionItemTypes {
     IMAGE_AND_VIDEO,
     IMAGE_ONLY,
@@ -34,7 +37,7 @@ data class DeletionCriteria(
 ) {
     companion object {
         /**
-         * A default criteria object that deletes everything that is a few days old.
+         * A default criteria object that deletes everything that is a few months old.
          */
         fun default(): DeletionCriteria {
             val initialDayMidnight = Calendar.getInstance()
@@ -43,7 +46,7 @@ data class DeletionCriteria(
             initialDayMidnight.set(Calendar.SECOND, 0)
             initialDayMidnight.set(Calendar.MILLISECOND, 0)
 
-            initialDayMidnight.add(Calendar.DAY_OF_MONTH, -3)
+            initialDayMidnight.add(Calendar.MONTH, -3)
 
             return (DeletionCriteria(
                 Date(initialDayMidnight.timeInMillis),

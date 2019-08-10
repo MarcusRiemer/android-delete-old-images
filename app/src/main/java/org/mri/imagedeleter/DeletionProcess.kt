@@ -22,20 +22,34 @@ import android.content.ContentResolver
 import android.net.Uri
 import android.provider.MediaStore
 
-
-data class DeletionResult(
+/**
+ * A proposed set of items that could be deleted.
+ */
+data class DeletionProcess(
     private val uri: Uri,
     private val contentResolver: ContentResolver,
     private val items: List<DeletionItem>,
     private val deletionCallback: (() -> Unit)
 ) {
+    /**
+     * The total size that would be freed by actually deleting these items.
+     */
     fun totalSize() = items.map { item -> item.fileSize() }
         .sum()
 
+    /**
+     * The size to show in the UI
+     */
+    fun formattedTotalSize() = readableFileSize(totalSize())
+
+    /**
+     * The number of items that would be deleted.
+     */
     fun numDeleted() = items.size
 
-    fun sizeDeleted() = readableFileSize(totalSize())
-
+    /**
+     * Delete files from disk and also tell the content provider about these deletions.
+     */
     fun actuallyDelete(): Int {
         val operations = ArrayList<ContentProviderOperation>()
         var operation: ContentProviderOperation

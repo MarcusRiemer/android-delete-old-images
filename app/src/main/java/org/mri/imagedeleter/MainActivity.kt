@@ -31,7 +31,9 @@ import androidx.recyclerview.widget.RecyclerView
 import java.util.*
 
 /**
- * Handles the UI for the actual deletion selection.
+ * Handles the UI for the actual deletion selection. If this were a real app instead of a little utility it should
+ * probably use fancy things like fragments, dependency injection or observables. But because the scope of this tool
+ * is so limited I don't actually see a benefit in bringing in the big guns.
  */
 class MainActivity : AppCompatActivity() {
     private var editTextImagesSince: EditText? = null
@@ -136,8 +138,8 @@ class MainActivity : AppCompatActivity() {
         deletionItemsAdapter.updateSelection(deletionCriteria)
     }
 
-    private fun deleteConfirmationDialog(res: DeletionResult) = AlertDialog.Builder(this)
-        .setTitle(getString(R.string.dlg_really_delete_title, res.numDeleted(), res.sizeDeleted()))
+    private fun deleteConfirmationDialog(res: DeletionProcess) = AlertDialog.Builder(this)
+        .setTitle(getString(R.string.dlg_really_delete_title, res.numDeleted(), res.formattedTotalSize()))
         .setPositiveButton(
             R.string.dlg_really_delete_positive
         ) { dlg: DialogInterface, _: Int ->
